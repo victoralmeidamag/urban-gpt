@@ -31,8 +31,7 @@
 
         .header-navbar {
             width: 100%;
-            background-color: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: #ede2d4;
             padding: 1rem 2rem;
             display: flex;
             align-items: center;
@@ -124,7 +123,7 @@
 
         .footer {
             padding: 20px 0;
-            background-color: #f1f1f1;
+            background-color: #ede2d4;
             border-top: 1px solid #e7e7e7;
             text-align: center;
             margin-top: auto;
@@ -250,14 +249,16 @@
         </button>
         
         <nav class="header-nav" id="navbarNav">
+                        
+            @auth
+                            @if(auth()->user()->role == 'admin')
+                <a href="{{ route('register-user') ?? '#' }}" class="header-nav-link @if(request()->routeIs('register-user')) active @endif">
+                    <i class="bi bi-person-add"></i>
+                    Registrar
+                </a>
+            @endif
             <a href="{{ route('chat.gpt') ?? '#' }}" class="header-nav-link @if(request()->routeIs('chat.gpt')) active @endif">
                 <i class="bi bi-chat-dots"></i> Chat
-            </a>
-            
-            @auth
-                <a href="{{ route('dashboard') ?? '#' }}" class="header-nav-link @if(request()->routeIs('dashboard')) active @endif">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
                 <a href="#" class="header-nav-link" 
                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="bi bi-box-arrow-right"></i> Sair
@@ -269,12 +270,26 @@
                 <a href="{{ route('login') ?? '#' }}" class="header-nav-link @if(request()->routeIs('login')) active @endif">
                     <i class="bi bi-box-arrow-in-right"></i> Login
                 </a>
-                <a href="{{ route('register') ?? '#' }}" class="header-nav-link @if(request()->routeIs('register')) active @endif">
-                    <i class="bi bi-person-plus"></i> Cadastro
-                </a>
             @endauth
         </nav>
     </header>
+        <div class="flash-messages-container">
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+    </div>
 
     <main class="main-content">
         <div class="content-wrapper">
@@ -289,10 +304,8 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Script aprimorado para toggle do menu mobile -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const toggler = document.querySelector('.navbar-toggler');
@@ -314,7 +327,6 @@
                 });
             }
 
-            // Fecha o menu quando clicar em um link (em mobile)
             const links = document.querySelectorAll('.header-nav-link');
             links.forEach(link => {
                 link.addEventListener('click', function() {

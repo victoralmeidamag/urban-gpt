@@ -132,7 +132,7 @@
 <div class="login-card">
     <h1 class="login-title">Login</h1>
     
-    <form method="POST" action="{{ route('login') }}">
+    <form method="POST" action="{{ route('login-user') }}">
         @csrf
         
         <div class="form-group">

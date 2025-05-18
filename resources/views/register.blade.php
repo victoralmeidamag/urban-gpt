@@ -165,7 +165,7 @@
 <div class="register-card">
     <h1 class="register-title">Cadastro</h1>
     
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register-user') }}">
         @csrf
         
         <div class="form-group">

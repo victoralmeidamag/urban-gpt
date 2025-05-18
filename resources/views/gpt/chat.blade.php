@@ -189,9 +189,10 @@
 <div class="row justify-content-center">
     <div class="col-lg-10 col-md-12">
         <div class="card shadow">
-            <div class="card-header bg-primary text-white py-2">
-                <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Chat com GPT</h5>
-            </div>
+<div class="card-header py-2" style="background-color: #ede2d4; color: #000;">
+    <h5 class="mb-0" style="color: #ea5473"><i class="bi bi-chat-dots"></i> <strong>IA UrbanGuide</strong></h5>
+</div>
+
 
                 <div class="card-body">
                     <div id="chat-container">

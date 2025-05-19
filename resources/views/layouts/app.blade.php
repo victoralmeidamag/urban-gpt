@@ -241,7 +241,7 @@
 <body>
     <header class="header-navbar">
         <div class="header-logo">
-            <img src="{{asset('images/LOGO TOPO.png')}}" alt="Logo">
+            <img src="{{asset('public/images/LOGO TOPO.png')}}" alt="Logo">
         </div>
         
         <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
@@ -266,10 +266,6 @@
                 <form id="logout-form" action="{{ route('logout') ?? '#' }}" method="POST" class="d-none">
                     @csrf
                 </form>
-            @else
-                <a href="{{ route('login') ?? '#' }}" class="header-nav-link @if(request()->routeIs('login')) active @endif">
-                    <i class="bi bi-box-arrow-in-right"></i> Login
-                </a>
             @endauth
         </nav>
     </header>

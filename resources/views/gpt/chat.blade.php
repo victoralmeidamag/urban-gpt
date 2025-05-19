@@ -199,7 +199,7 @@
                         <div id="chat-messages">
                             <!-- Mensagem de boas-vindas -->
                             <div class="message assistant">
-                                <strong>GPT:</strong> Olá! Como posso ajudar você hoje?
+                                <strong>UrbanGuide:</strong> Olá! Digite o endereço completo que você gostaria de consultar o zoneamento urbano.
                             </div>
                             <!-- Indicador de digitação -->
                             <div class="typing-indicator" id="typing-indicator">
@@ -230,9 +230,45 @@
         const sendButton = document.getElementById('send-message');
         const typingIndicator = document.getElementById('typing-indicator');
         
+        // Prompt pré-definido que será concatenado com o endereço
+        const predefinedPrompt = `Você é um assistente especialista em zoneamento urbano no Brasil. Sua função é fornecer respostas completas, diretas e técnicas sobre o uso e ocupação do solo de qualquer endereço brasileiro informado.
+Você realiza consultas prioritariamente em leismunicipais.com.br, ou outros sites via web, utilizando fontes públicas oficiais.
+⸻
+ FLUXO DA CONSULTA:
+	1.	Geocodifique o endereço completo (rua, número, bairro e cidade) utilizando Google Maps, OpenStreetMap ou serviço similar para obter latitude e longitude.
+	2.	Consulte primeiro o banco de dados interno para localizar:
+	•	Zona urbanística do lote
+	•	Parâmetros completos da legislação vigente
+	•	Restrições legais e exigências específicas
+	3.	Caso não encontre algum dado no banco, realize busca complementar via web nas fontes oficiais da cidade.
+Nunca tenha pressa. Priorize precisão acima de tudo. Aguarde o tempo necessário para garantir exatidão técnica.
+⸻
+A RESPOSTA DEVE CONTER:
+Zoneamento atualizado
+ Índices urbanísticos:
+	•	Coeficiente de aproveitamento (básico e máximo)
+	•	Taxa de ocupação
+	•	Taxa de permeabilidade
+	•	Recuos mínimos exigidos
+Altura máxima permitida
+Restrições legais aplicáveis (APP, servidão, tombamento, etc.)
+ Exigências específicas do município (acessibilidade, vagas mínimas etc.)
+ Condições para aprovação do projeto
+Viabilidade da construção (positiva, negativa ou condicionada)
+Link com o endereço pinado no Google Maps
+⸻
+ REGRAS IMPORTANTES:
+	•	Nunca use expressões como: "aproximadamente", "talvez", "pode ser que", "é necessário validar em site externo".
+	•	Não inclua fontes, links de referência ou citações.
+	•	A resposta deve ter tom técnico, definitivo e confiável, mesmo quando a consulta foi feita via web.
+	•	Se o usuário fizer qualquer pergunta que não envolva um endereço completo, responda:
+"Desculpe, sou um perito em zoneamento urbano e só posso responder consultas relacionadas a endereços completos no Brasil."
+Você é um assistente técnico altamente confiável, treinado para oferecer respostas validadas, sem margem para dúvidas ou interpretações, usando banco de dados próprio e pesquisa online complementar apenas quando necessário.
+A cidade e endereço a serem pesquisados agora são: `;
+
         // Adicionar mensagem de boas-vindas ao histórico
         let messageHistory = [
-            { role: 'assistant', content: 'Olá! Como posso ajudar você hoje?' }
+            { role: 'assistant', content: 'Olá! Digite o endereço completo que você gostaria de consultar o zoneamento urbano.' }
         ];
         
         // Função para auto-expandir o textarea conforme digita
@@ -259,12 +295,12 @@
         }
         
         // Função para adicionar mensagem ao chat
-        function addMessage(role, content) {
+        function addMessage(role, content, displayContent = null) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', role);
             
-            // Formatar o conteúdo da mensagem
-            let formattedContent = content;
+            // Use displayContent para mostrar na tela, mas content para o histórico
+            let formattedContent = displayContent || content;
             
             // Aplicar formatação, se for mensagem do assistente
             if (role === 'assistant') {
@@ -293,68 +329,76 @@
                 }
             }
             
-            messageDiv.innerHTML = `<strong>${role === 'user' ? 'Você' : 'GPT'}:</strong> ${formattedContent}`;
+            messageDiv.innerHTML = `<strong>${role === 'user' ? 'Você' : 'UrbanGuide'}:</strong> ${formattedContent}`;
             
             // Inserir antes do indicador de digitação
             chatMessages.insertBefore(messageDiv, typingIndicator);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Adicionar ao histórico
+            // Adicionar ao histórico (sempre usar content original)
             messageHistory.push({ role, content });
         }
         
-        async function sendToGpt(message) {
-    try {
-        showTypingIndicator();
-        
-        // Criar o histórico completo com a instrução do sistema
-        const fullMessageHistory = [
-            {
-                role: 'system',
-                content: 'Você é um assistente especialista em zoneamento urbano no Brasil. Sua função é fornecer respostas completas, diretas e técnicas sobre o uso e ocupação do solo de qualquer endereço brasileiro informado. Consulte prioritariamente fontes oficiais. Forneça todos os parâmetros urbanísticos necessários: zoneamento, coeficiente de aproveitamento, taxa de ocupação, taxa de permeabilidade, recuos mínimos, altura máxima, restrições legais e exigências do município. Responda de forma estruturada e técnica, sem placeholders.'
-            },
-            ...messageHistory
-        ];
-        
-        const response = await fetch('/api/gpt/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                messages: fullMessageHistory, // Enviar o histórico completo com a instrução
-                temperature: 0.3, // Reduzido para respostas mais precisas
-                model: 'gpt-4o'
-            })
-        });
-        
-        const data = await response.json();
-        
-        hideTypingIndicator();
-        
-        if (data.success) {
-            const gptResponse = data.data.message.content;
-            addMessage('assistant', gptResponse);
-        } else {
-            addMessage('system', 'Erro ao processar a mensagem. Por favor, tente novamente.');
+        async function sendToGpt(endereco) {
+            try {
+                showTypingIndicator();
+                
+                // Concatenar o prompt pré-definido com o endereço
+                const fullPrompt = predefinedPrompt + endereco + '\n\nAo final da sua resposta, NUNCA, EM HIPÓTESE ALGUMA, envia mensagens como: para maiores informações acesse tal tal tal... precisamos garantir que a resposta perfeita e única, seja só a SUA, então vc finaliza com sua resposta e nada mais!!!';
+                
+                // Criar o histórico completo com a instrução do sistema
+                const fullMessageHistory = [
+                    {
+                        role: 'system',
+                        content: 'Você é um assistente especialista em zoneamento urbano no Brasil. Sua função é fornecer respostas completas, diretas e técnicas sobre o uso e ocupação do solo de qualquer endereço brasileiro informado. Consulte prioritariamente fontes oficiais. Forneça todos os parâmetros urbanísticos necessários: zoneamento, coeficiente de aproveitamento, taxa de ocupação, taxa de permeabilidade, recuos mínimos, altura máxima, restrições legais e exigências do município. Responda de forma estruturada e técnica, sem placeholders.'
+                    },
+                    ...messageHistory,
+                    {
+                        role: 'user',
+                        content: fullPrompt
+                    }
+                ];
+                
+                const response = await fetch('{{route("api.gpt")}}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        messages: fullMessageHistory,
+                        temperature: 0.3,
+                        model: 'gpt-4o'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                hideTypingIndicator();
+                
+                if (data.success) {
+                    const gptResponse = data.data.message.content;
+                    addMessage('assistant', gptResponse);
+                } else {
+                    addMessage('system', 'Erro ao processar a mensagem. Por favor, tente novamente.');
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('system', 'Erro de conexão. Por favor, verifique sua internet e tente novamente.');
+                console.error('Erro na chamada da API:', error);
+            }
         }
-    } catch (error) {
-        hideTypingIndicator();
-        addMessage('system', 'Erro de conexão. Por favor, verifique sua internet e tente novamente.');
-        console.error('Erro na chamada da API:', error);
-    }
-}
         
         // Função para processar o envio da mensagem
         function handleSendMessage() {
-            const message = userMessage.value.trim();
-            if (message) {
-                addMessage('user', message);
+            const endereco = userMessage.value.trim();
+            if (endereco) {
+                // Mostrar apenas o endereço na interface do usuário
+                addMessage('user', endereco, endereco);
                 userMessage.value = '';
                 // Resetar altura do textarea após envio
                 userMessage.style.height = 'auto';  
-                sendToGpt(message);
+                sendToGpt(endereco);
             }
         }
         
